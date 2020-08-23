@@ -105,7 +105,8 @@ namespace BookStore.Controllers
                 Title = book.Title,
                 Description = book.Description,
                 AuthorId = authorId,
-                Authors = authorRepository.List().ToList()
+                Authors = authorRepository.List().ToList(),
+                ImageUrl = book.ImageUrl
             };
             return View(viewModel);
         }
@@ -117,12 +118,32 @@ namespace BookStore.Controllers
         {
             try
             {
+                string fileName = string.Empty;
+                if (viewModel.File != null)
+                {
+                    string uploads = Path.Combine(hosting.WebRootPath, "uploads");
+                    fileName = viewModel.File.FileName;
+                    string fullPath = Path.Combine(uploads, fileName);
+
+                    //Delete the old file
+                    string oldFileName = bookStoreRepoitory.Find(viewModel.BookId).ImageUrl;
+                    string fullPathOldFileName = Path.Combine(uploads, oldFileName);
+
+                    if(fullPath != fullPathOldFileName)
+                    {
+                        System.IO.File.Delete(fullPathOldFileName);
+                        //save the new file
+                        viewModel.File.CopyTo(new FileStream(fullPath, FileMode.Create));
+                    }
+                }
+
                 var author = authorRepository.Find(viewModel.AuthorId);
                 Book book = new Book
                 {
                     Title = viewModel.Title,
                     Description = viewModel.Description,
-                    Author = author
+                    Author = author,
+                    ImageUrl = fileName
                 };
                 bookStoreRepoitory.Update(viewModel.BookId, book);
                 return RedirectToAction(nameof(Index));
