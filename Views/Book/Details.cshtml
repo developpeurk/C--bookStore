@@ -27,13 +27,23 @@
         </dt>
         <dd>
             @Html.DisplayFor(model => model.Description)
-        </dd>  
+        </dd>
         <dt>
             @Html.DisplayNameFor(model => model.Author.FullName)
         </dt>
         <dd>
             @Html.DisplayFor(model => model.Author.FullName)
         </dd>
+        @if (Model.ImageUrl != null)
+        {
+            <dt>
+                Image:
+            </dt>
+            <dd>
+               <img src="~/uploads/@Model.ImageUrl" style="width:64px;" class="img-thumbnail" />
+            </dd>
+        }
+
     </dl>
 </div>
 <div>

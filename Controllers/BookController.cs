@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using BookStore.Models;
 using BookStore.Models.Repositories;
 using BookStore.ViewModels;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,11 +16,16 @@ namespace BookStore.Controllers
     {
         private readonly IBookStoreRepoitory<Book> bookStoreRepoitory;
         private readonly IBookStoreRepoitory<Author> authorRepository;
+        private readonly IHostingEnvironment hosting;
 
-        public BookController(IBookStoreRepoitory<Book> bookStoreRepoitory, IBookStoreRepoitory<Author> authorRepository)
+        public BookController(IBookStoreRepoitory<Book> bookStoreRepoitory, 
+                              IBookStoreRepoitory<Author> authorRepository,
+                              IHostingEnvironment hosting
+                              )
         {
             this.bookStoreRepoitory = bookStoreRepoitory;
             this.authorRepository = authorRepository;
+            this.hosting = hosting;
         }
         // GET: BookController
         public ActionResult Index()
@@ -50,6 +57,15 @@ namespace BookStore.Controllers
             {
                 try
                 {
+                    string fileName = string.Empty;
+                    if (model.File != null)
+                    {
+                        string uploads = Path.Combine(hosting.WebRootPath, "uploads");
+                        fileName = model.File.FileName;
+                        string fullPath = Path.Combine(uploads, fileName);
+                        model.File.CopyTo(new FileStream(fullPath,FileMode.Create));
+                    }
+
                     if (model.AuthorId == -1)
                     {
                         ViewBag.Message = "Please Select an Author from the List";
@@ -62,7 +78,8 @@ namespace BookStore.Controllers
                         Id = model.BookId,
                         Title = model.Title,
                         Description = model.Description,
-                        Author = author
+                        Author = author,
+                        ImageUrl = fileName
                     };
                     bookStoreRepoitory.Add(book);
                     return RedirectToAction(nameof(Index));
