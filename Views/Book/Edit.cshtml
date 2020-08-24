@@ -31,12 +31,9 @@
                 <label asp-for="File" class="control-label"></label>
                 <input asp-for="File" name="File" type="file" class="form-control" />
                 <span asp-validation-for="File" class="text-danger"></span>
-                @if(Model.ImageUrl != null)
-                {
-
                 <img src="~/uploads/@Model.ImageUrl" style="width:124px" class="img-thumbnail" />
-                }
             </div>
+                <input asp-for="ImageUrl" type="hidden" class="form-control" />
             <div class="form-group">
                 <label asp-for="AuthorId" class="control-label"></label>
                 <select asp-for="AuthorId" class="form-control"

@@ -18,7 +18,7 @@ namespace BookStore.Controllers
         private readonly IBookStoreRepoitory<Author> authorRepository;
         private readonly IHostingEnvironment hosting;
 
-        public BookController(IBookStoreRepoitory<Book> bookStoreRepoitory, 
+        public BookController(IBookStoreRepoitory<Book> bookStoreRepoitory,
                               IBookStoreRepoitory<Author> authorRepository,
                               IHostingEnvironment hosting
                               )
@@ -44,7 +44,7 @@ namespace BookStore.Controllers
         // GET: BookController/Create
         public ActionResult Create()
         {
-            
+
             return View(GetAllAuthor());
         }
 
@@ -53,23 +53,18 @@ namespace BookStore.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create(BookAuthorViewModel model)
         {
-            if (ModelState.IsValid) 
+            if (ModelState.IsValid)
             {
                 try
                 {
                     string fileName = string.Empty;
-                    if (model.File != null)
-                    {
-                        string uploads = Path.Combine(hosting.WebRootPath, "uploads");
-                        fileName = model.File.FileName;
-                        string fullPath = Path.Combine(uploads, fileName);
-                        model.File.CopyTo(new FileStream(fullPath,FileMode.Create));
-                    }
+
+
 
                     if (model.AuthorId == -1)
                     {
                         ViewBag.Message = "Please Select an Author from the List";
-                       
+
                         return View(GetAllAuthor());
                     }
                     var author = authorRepository.Find(model.AuthorId);
@@ -89,14 +84,14 @@ namespace BookStore.Controllers
                     return View();
                 }
             }
-            
+
             ModelState.AddModelError("", "You have to fill all the required fields");
             return View(GetAllAuthor());
         }
 
         // GET: BookController/Edit/5
         public ActionResult Edit(int id)
-        {   
+        {
             var book = bookStoreRepoitory.Find(id);
             var authorId = book.Author == null ? book.Author.Id = 0 : book.Author.Id;
             var viewModel = new BookAuthorViewModel
@@ -118,7 +113,7 @@ namespace BookStore.Controllers
         {
             try
             {
-                string fileName = string.Empty;
+                string fileName = UploadFile(viewModel.File) ?? string.Empty;
                 if (viewModel.File != null)
                 {
                     string uploads = Path.Combine(hosting.WebRootPath, "uploads");
@@ -126,10 +121,10 @@ namespace BookStore.Controllers
                     string fullPath = Path.Combine(uploads, fileName);
 
                     //Delete the old file
-                    string oldFileName = bookStoreRepoitory.Find(viewModel.BookId).ImageUrl;
+                    string oldFileName = viewModel.ImageUrl;
                     string fullPathOldFileName = Path.Combine(uploads, oldFileName);
 
-                    if(fullPath != fullPathOldFileName)
+                    if (fullPath != fullPathOldFileName)
                     {
                         System.IO.File.Delete(fullPathOldFileName);
                         //save the new file
@@ -140,6 +135,7 @@ namespace BookStore.Controllers
                 var author = authorRepository.Find(viewModel.AuthorId);
                 Book book = new Book
                 {
+                    Id = viewModel.BookId,
                     Title = viewModel.Title,
                     Description = viewModel.Description,
                     Author = author,
@@ -148,7 +144,7 @@ namespace BookStore.Controllers
                 bookStoreRepoitory.Update(viewModel.BookId, book);
                 return RedirectToAction(nameof(Index));
             }
-            catch
+            catch (Exception ex)
             {
                 return View();
             }
@@ -180,7 +176,7 @@ namespace BookStore.Controllers
         List<Author> FillSelectList()
         {
             var authors = authorRepository.List().ToList();
-            authors.Insert(0,new Author{Id=-1, FullName="--- Please Select an Author --- "});
+            authors.Insert(0, new Author { Id = -1, FullName = "--- Please Select an Author --- " });
             return authors;
         }
         BookAuthorViewModel GetAllAuthor()
@@ -190,6 +186,18 @@ namespace BookStore.Controllers
                 Authors = FillSelectList()
             };
             return vmodel;
+        }
+
+        string UploadFile(IFormFile file)
+        {
+             if (file != null)
+             {
+                string uploads = Path.Combine(hosting.WebRootPath, "uploads");
+                string fullPath = Path.Combine(uploads, file.FileName);
+                file.CopyTo(new FileStream(fullPath, FileMode.Create));
+                return file.FileName;
+             }
+            return null;
         }
     }
 }
